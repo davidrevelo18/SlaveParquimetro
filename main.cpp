@@ -1,5 +1,3 @@
-
-
 #include "Timeout.h"
 #include "mbed.h"
 #include <cstdio>
@@ -7,7 +5,6 @@
 #include "Queue.h"
 
 using namespace std;
-
 
 #define     COMMAND_ON          0X70
 #define     COMMAND_INIT        0X71
@@ -35,45 +32,41 @@ using namespace std;
 #define     NO_DATA             0x87
 #define     COMMAND_END         0X88
 
+/* COMUNICACION SERIAL*/
 BufferedSerial serial(PA_0,PA_1, 19200); // UART TX, RX Comunicacion con modem SIM900
 static UnbufferedSerial Master(PC_1, PC_0,9600); //transmision de master a slave
 ATCmdParser Gsm(&serial,"\r\n");
 
+/* ENTRADAS Y SALIDAS DIGITALES */
 DigitalIn   Button(BUTTON1);
 DigitalOut  Led(LED1);
 DigitalOut  EnableSIM900(PB_0);
 DigitalOut  ResetSIM900(PA_10);
 
+/* VARIABLES PARA ALMACENAR INSTRUCCIONES DE MAESTRO HACIA EL ESCLAVO*/
 char Command;
-char Sim900_Buffer[1000];
 Timer       BaseClock;
-char buf[256];
 EventQueue eventQueue;
-
-bool statusRcvSerial;
-bool isSimOn = false;
-bool isCallReady = true;
 QUEUE MasterCommand;
 
-char powerDownResponse[] = "POWER";
-char okResponse[] = "OK";
-char callReady[] = "Call Ready";
+/* VARIABLES PARA ALMACENAR MENSAJES DE MAESTRO A ESCLAVO*/
 char Encrypt[174];  
 // char HostingData[]="{\"municipio\":\"San Jose\",\"id\":\"1068\",\"alerts\":\"AAAAAA\"}\r\n";
 char HostingData[]="{\"municipio\":\"xxxxxxxx\",\"id\":\"xxxx\",\"alerts\":\"xxxxxx\"}\r\n";
 char HostingAnswer[]="OK+000+00:00";
 
-// Variables para interrupcion serial - comunicacion maestro/esclavo
+/* VARIABLES PARA INTERRUPCION SERIAL MAESTRO/ESCLAVO */
 char c;
 bool isSerialInterrupt = false;
 char buff[10] = {};
 char commandByte[1];
 char commandByteUsr[1];
 
-// http
+/* VARIABLES DE ESTATUS HTTP*/
 bool okStatus = 0;
 bool okStatusUsr = 0;
 
+// INTERRUPCION DE RECEPCION SERIAL MAESTRO-ESCLAVO
 void on_rx_interrupt()
 {
     Master.read(&c, 1);
@@ -82,21 +75,21 @@ void on_rx_interrupt()
     MasterCommand.Put(c);
 }
 
+// METODO PARA ENCENCED SIM Y ASEGURAR CONEXION A LA RED
 void EncenderSIM9002()
 {
-    bool result2 = false;
-    bool TimeOut = false;
+    bool result = false;
     auto Transcurrido = 0;
     char valueCSQ[100];
     int size;
     char * p;
-    char * pp;
+    bool signal;
 
     BaseClock.reset();
     BaseClock.start();
 
     printf("Inicia bucle encencder \n");
-    while(result2==false)
+    while(result==false)
     {
         printf("Envia AT encender \n");
         Gsm.send("AT");
@@ -104,14 +97,14 @@ void EncenderSIM9002()
         BaseClock.stop();
         Transcurrido = chrono::duration_cast<chrono::milliseconds>(BaseClock.elapsed_time()).count();
         BaseClock.start();
-        result2 =  Gsm.recv("OK");
+        result =  Gsm.recv("OK");
 
-        if(result2==false){
+        if(result==false){
             printf("encencder------------\n");
             EnableSIM900 = 1;
             ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(500));
+            ThisThread::sleep_for(chrono::milliseconds(1000));
         }
 
         if(Transcurrido>5000) {
@@ -126,7 +119,7 @@ void EncenderSIM9002()
     BaseClock.reset();
     BaseClock.start();
 
-    bool signal;
+
     while(true)
     {
 
@@ -188,11 +181,13 @@ void EncenderSIM9002()
     }
 }
 
+
 void IniciarSIM900()
 {
     printf("Modem iniciado\n");
 }
 
+// CONFIGURACION GPRS Y APN DE LA CONEXION
 void ConexionGPRS()
 {
 
@@ -232,6 +227,7 @@ void ConexionGPRS()
                              
 }
 
+// APAGA SIM POR SOFTWARE
 void ApagarSIM900()
 {
     Gsm.send("AT+CPOWD=1\r\n");//Apaga modulo
@@ -249,7 +245,9 @@ void ApagarSIM900()
     // EnableSIM900 = 0;
 }
 
-void PostEncryptHTTP() //Servicio de conexión
+
+// CONEXION A ENDPOINT parkPQ
+void PostEncryptHTTP() 
 {
     char Len[24];    
     char value2[100];
@@ -306,6 +304,7 @@ void PostEncryptHTTP() //Servicio de conexión
 
 }
 
+// RECIBE RESPUESTA HTTP SI STATUS ES 200
 void RespuestaHTTP()
 {
 
@@ -349,10 +348,9 @@ void RespuestaHTTP()
     Gsm.send("AT+SAPBR=0,1"); 
     ThisThread::sleep_for(chrono::milliseconds(500));
     printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
-
-
 }
 
+// TERMINA CONEXION HTTP CON MODEM
 void FinalizarComunicacion()
 {
     Gsm.send("AT+SAPBR=0,1"); 
@@ -360,7 +358,7 @@ void FinalizarComunicacion()
     printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
 }
 
-
+// LEE INFORNACION DEL USUARIO A TRAVES DEL MAESTRO
 void ReadUsuario()
 {
     printf("Read Usuario\n");
@@ -372,12 +370,13 @@ void ReadUsuario()
     Encrypt[173]='\r';
     commandByteUsr[0]=NEXT_STEP;
     Master.write(&commandByteUsr[0],1);
-
 }
 
+// VERIFIC CONEXION CON SIM900
 void ConexionSIM900()
 {
     char ConectionEnable;
+    Gsm.send("AT");
     if(Gsm.recv("OK")) {
         printf("Conectado\n");
         ConectionEnable='A';
@@ -394,6 +393,7 @@ void ConexionSIM900()
     // ApagarSIM900();
 }
 
+// VERIFICA SI HAY COBERTURA DE SIM900 CON LA RED DE DATOS 
 void CoberturaSIM900()
 {
     char coberturaCSQ;
@@ -448,7 +448,9 @@ void CoberturaSIM900()
 }
 
 
+/* SECUENCIA PARA ENVIO DE ESTATUS A LA BASE DE DATOS*/
 
+// ENCENDER SIM Y ASEGURARSE DE COBERTURA DE RED DE DATOS
 void Step1()
 {
     printf("Encender\n");
@@ -464,6 +466,7 @@ void Step1()
 
 }
 
+// BYPASS
 void Step2(){
     
     // Gsm.send("AT+CPIN?\r\n");                                       // Respuesta +CPIN: READY\n\nOK
@@ -477,6 +480,7 @@ void Step2(){
 
 }
 
+// BYPASS
 void Step3()
 {
     // Gsm.send("AT+CIPSTATUS\r\n");                                   // Respuesta OK  STATE: IP INITIAL
@@ -489,6 +493,7 @@ void Step3()
 
 }
 
+// BYPASS
 void Step4()
 {
     ThisThread::sleep_for(chrono::milliseconds(200));
@@ -497,6 +502,7 @@ void Step4()
 
 }
 
+// CONFIGURACION APN
 void Step5()
 {
     Gsm.send("AT");
@@ -524,6 +530,7 @@ void Step5()
 
 }
 
+// SE ASEGURA DE ABRIR BEARER Y DE OBTENER UNA IP PARA LA CONEXION
 void Step6()
 {
     char valueRecv[64];
@@ -542,6 +549,7 @@ void Step6()
 
 }
 
+// INICIA COMUNICACION HTTP
 void Step7()
 {
     Gsm.send("AT+HTTPINIT"); 
@@ -561,6 +569,7 @@ void Step7()
 
 }
 
+// RECIBE DATOS DEL MAESTRO PARA LA DATA DEL POST
 void Step8()
 {
     //char HostingData[]="{\"municipio\":\"Santa Ana\",\"id\":0000, \"alerts\":\"000000\"}\r\n";
@@ -595,6 +604,7 @@ void Step8()
 
 }
 
+// SETEA LA DATA Y REALIZA EL POST A LA URL
 void Step9()
 {
     char value2[100];
@@ -648,6 +658,8 @@ void Step9()
     Master.write(&commandByte[0],1);
 
 }
+
+// SI EL ESTATUS ES 200 RECIBE LA DATA DEL SERVIDOR
 void Step10()
 {
     char value2[100];
@@ -707,6 +719,7 @@ void Step10()
     Master.write(&commandByte[0],1);
 }
 
+// ENVIA INFORMACION DE RESPUESTA AL MAESTRO Y TERMINA LA CONEXION HTTP
 void Step11()
 {
     printf("<--Hosting Answer 11--%s-->\n",HostingAnswer);
