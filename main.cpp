@@ -7,8 +7,8 @@
 using namespace std;
 
 #define     COMMAND_ON          0X70
-#define     COMMAND_INIT        0X71
-#define     COMMAND_GPRS        0X72
+#define     COMMAND_INIT        0X71    //113
+#define     COMMAND_GPRS        0X72    //114
 #define     COMMAND_DATA        0X73
 #define     COMMAND_POST        0X74
 #define     COMMAND_ANSWER      0X75
@@ -342,12 +342,12 @@ void RespuestaHTTP()
     }
 
 
-    Gsm.send("AT+HTTPTERM"); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
-    printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
-    Gsm.send("AT+SAPBR=0,1"); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
-    printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
+    // Gsm.send("AT+HTTPTERM"); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+    // printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
+    // Gsm.send("AT+SAPBR=0,1"); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+    // printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
 }
 
 // TERMINA CONEXION HTTP CON MODEM
@@ -850,7 +850,7 @@ int main()
                 case COMMAND_OFF:
                     printf("-> -> Apagar\n");
                     MasterCommand.Flush();
-                    ApagarSIM900();
+                    // ApagarSIM900();
                     ThisThread::sleep_for(chrono::milliseconds(2000));
                     // BaseClock.stop();
 
