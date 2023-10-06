@@ -89,8 +89,17 @@ void EncenderSIM9002()
     BaseClock.start();
 
     printf("Inicia bucle encencder \n");
+
+    EnableSIM900 = 0;
+    ThisThread::sleep_for(chrono::milliseconds(500));
+    EnableSIM900 = 1;
+    ThisThread::sleep_for(chrono::milliseconds(2000));
+    EnableSIM900 = 0;
+    ThisThread::sleep_for(chrono::milliseconds(15000));
+
     while(result==false)
     {
+        char valueRec[100];
         printf("Envia AT encender \n");
         Gsm.send("AT");
 
@@ -98,14 +107,18 @@ void EncenderSIM9002()
         Transcurrido = chrono::duration_cast<chrono::milliseconds>(BaseClock.elapsed_time()).count();
         BaseClock.start();
         result =  Gsm.recv("OK");
+        // Gsm.recv("%s\r\n", valueRec);
 
-        if(result==false){
-            printf("encencder------------\n");
-            EnableSIM900 = 1;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
-            EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(1000));
-        }
+        printf("encender result. %d\n",result);
+  ThisThread::sleep_for(chrono::milliseconds(1000));
+        // if(result==false){
+        //     printf("encencder------------\n");
+        //     EnableSIM900 = 0;
+        //     ThisThread::sleep_for(chrono::milliseconds(500));
+        //     EnableSIM900 = 1;
+        //     ThisThread::sleep_for(chrono::milliseconds(2000));
+        //     EnableSIM900 = 0;
+        // }
 
         if(Transcurrido>5000) {
 
@@ -157,10 +170,11 @@ void EncenderSIM9002()
                
         }
         else{
-            EnableSIM900 = 1;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 0;
             ThisThread::sleep_for(chrono::milliseconds(500));
+            EnableSIM900 = 1;
+            ThisThread::sleep_for(chrono::milliseconds(2000));
+            EnableSIM900 = 0;
         }
 
         BaseClock.stop();
@@ -172,10 +186,11 @@ void EncenderSIM9002()
             Transcurrido=0;
             BaseClock.reset();
             BaseClock.stop();
-            EnableSIM900 = 1;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 0;
             ThisThread::sleep_for(chrono::milliseconds(500));
+            EnableSIM900 = 1;
+            ThisThread::sleep_for(chrono::milliseconds(2000));
+            EnableSIM900 = 0;
             MasterCommand.Flush();
         }
     }
@@ -190,41 +205,24 @@ void IniciarSIM900()
 // CONFIGURACION GPRS Y APN DE LA CONEXION
 void ConexionGPRS()
 {
-
     char valueRecv[64];
 
-    Gsm.send("AT\r\n");
+    Gsm.send("AT");
     printf("AT %i\r\n",Gsm.recv("OK")); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+SAPBR=3,1,\"Contype\",\"GPRS\"\r\n"); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
+    printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(2000));
 
-    Gsm.send("AT+SAPBR=3,1,\"APN\",\"internet.comcel.com.co\"\r\n"); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=3,1,\"USER\",\"COMCELWEB\"\r\n");
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK"));  
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=3,1,\"PWD\",\"COMCELWEB\"\r\n"); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=1,1\r\n"); 
-    printf("AT+SAPBR=1,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=2,1\r\n"); 
-    Gsm.recv("+SAPBR:%s\r\nOK", valueRecv);
-    printf("response AT+SAPBR=2,1 %s\n", valueRecv); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    Gsm.send("AT+CGPADDR"); 
+    Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
+    printf("response AT+CGPADDR %s\n",valueRecv); 
+    ThisThread::sleep_for(chrono::milliseconds(2000));
 
     printf("Next Step\n");
     commandByte[0]=NEXT_STEP;
-    Master.write(&commandByte[0],1);
-                             
+    Master.write(&commandByte[0],1);                          
 }
 
 // APAGA SIM POR SOFTWARE
@@ -258,12 +256,13 @@ void PostEncryptHTTP()
     printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+HTTPPARA=\"CID\",1\r\n"); 
-    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
-
     Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(500));
+   
+    Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
+    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
+    ThisThread::sleep_for(chrono::milliseconds(1000));
 
     sprintf(Len,"AT+HTTPDATA=%i,10000\r\n",(strlen(Encrypt)));// AT+HTTPDATA=AT+HTTPDATA/i  bytes 10s
     Gsm.send("%s",Len);
@@ -353,9 +352,9 @@ void RespuestaHTTP()
 // TERMINA CONEXION HTTP CON MODEM
 void FinalizarComunicacion()
 {
-    Gsm.send("AT+SAPBR=0,1"); 
+    Gsm.send("AT+HTTPTERM"); 
     ThisThread::sleep_for(chrono::milliseconds(500));
-    printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
+    printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
 }
 
 // LEE INFORNACION DEL USUARIO A TRAVES DEL MAESTRO
@@ -509,21 +508,9 @@ void Step5()
     printf("AT %i\r\n",Gsm.recv("OK")); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+SAPBR=3,1,\"Contype\",\"GPRS\""); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=3,1,\"APN\",\"internet.comcel.com.co\""); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=3,1,\"USER\",\"COMCELWEB\"");
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK"));  
-    ThisThread::sleep_for(chrono::milliseconds(1000));
-
-    Gsm.send("AT+SAPBR=3,1,\"PWD\",\"COMCELWEB\""); 
-    printf("AT+SAPBR=3,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
+    printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(2000));
 
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -533,16 +520,13 @@ void Step5()
 // SE ASEGURA DE ABRIR BEARER Y DE OBTENER UNA IP PARA LA CONEXION
 void Step6()
 {
-    char valueRecv[64];
+    char valueRecv[100];
 
-    Gsm.send("AT+SAPBR=1,1"); 
-    printf("AT+SAPBR=1,1 %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    Gsm.send("AT+CGPADDR"); 
+    Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
+    printf("response AT+CGPADDR %s\n",valueRecv); 
+    ThisThread::sleep_for(chrono::milliseconds(2000));
 
-    Gsm.send("AT+SAPBR=2,1"); 
-    Gsm.recv("+SAPBR:%s\r\nOK", valueRecv);
-    printf("response AT+SAPBR=2,1 %s\n", valueRecv); 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
 
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -554,10 +538,6 @@ void Step7()
 {
     Gsm.send("AT+HTTPINIT"); 
     printf("AT+HTTPINIT %i\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
-
-    Gsm.send("AT+HTTPPARA=\"CID\",1"); 
-    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(500));
 
     Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/alertPQ\""); 
@@ -572,7 +552,7 @@ void Step7()
 // RECIBE DATOS DEL MAESTRO PARA LA DATA DEL POST
 void Step8()
 {
-    //char HostingData[]="{\"municipio\":\"Santa Ana\",\"id\":0000, \"alerts\":\"000000\"}\r\n";
+    // char HostingData[]="{\"municipio\":\"Santa Ana\",\"id\":0000, \"alerts\":\"000000\"}\r\n";
     // printf("Data hosting %s\n",HostingData);
     ThisThread::sleep_for(chrono::milliseconds(100));
     // Municipio
@@ -598,6 +578,9 @@ void Step8()
     HostingData[33]=MasterCommand.Get();
     printf("Data hosting 2 %s\n",HostingData);
 
+    Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
+    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
+    ThisThread::sleep_for(chrono::milliseconds(1000));
     // PrintSerialRepeat("AT+HTTPPARA=\"CONTENT\",\"application/json\"\r\n","OK",500,75);    // AT+HTTPPARA="CONTENT","application/json"
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -627,7 +610,7 @@ void Step9()
     Gsm.recv("OK");
     Gsm.read(value2, val);
     printf("value %s\n", value2);
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(4000));
     Gsm.read(value2, val);
     printf("----value action %s-----\n", value2);
     // PrintSerialRepeat("AT+HTTPSCONT?\r\n","OK",8000,1800);
@@ -709,7 +692,7 @@ void Step10()
             // }
 
             // printf("Aceptada\n");
-            printf("<--Hosting Answer--%s-->\n",HostingAnswer);
+            // printf("<--Hosting Answer--%s-->\n",HostingAnswer);
         } else {
             printf("Rechazada\n");
         }
@@ -731,9 +714,9 @@ void Step11()
     Gsm.send("AT+HTTPTERM"); 
     ThisThread::sleep_for(chrono::milliseconds(500));
     printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
-    Gsm.send("AT+SAPBR=0,1"); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
-    printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
+    // Gsm.send("AT+SAPBR=0,1"); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+    // printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
 
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -747,13 +730,12 @@ void Step11()
     ThisThread::sleep_for(chrono::milliseconds(1000));
 }
 
-
-
 int main()
 {
-    printf("\n-----------Paquimetro/Slave v2.0\n");
+    printf("\n-----------Paquimetro/Slave v1.1\n");
     // t.start(callback(&eventQueue, &EventQueue::dispatch_forever));
     // Master.sigio(callback(onSigio));
+   
     Master.attach(&on_rx_interrupt, SerialBase::RxIrq);
 
     // serial.sigio(callback(onSigio));
@@ -763,9 +745,33 @@ int main()
     // Gsm.debug_on(false);
     // Gsm.set_timeout(1000);
 
-
     while (true) 
     {
+
+
+    // Step1();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step2();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step3();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step4();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step5();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step6();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step7();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step8();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step9();
+    // ThisThread::sleep_for(chrono::milliseconds(6000));
+    // Step10();
+    // ThisThread::sleep_for(chrono::milliseconds(3000));
+    // Step11();
+    // ThisThread::sleep_for(chrono::milliseconds(120000));
+
         if(isSerialInterrupt){
 
             printf("Serial Interrupt %d\n",buff[0]);
