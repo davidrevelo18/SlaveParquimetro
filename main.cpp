@@ -91,11 +91,13 @@ void EncenderSIM9002()
     printf("Inicia bucle encencder \n");
 
     EnableSIM900 = 0;
-    ThisThread::sleep_for(chrono::milliseconds(500));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
     EnableSIM900 = 1;
-    ThisThread::sleep_for(chrono::milliseconds(2000));
-    EnableSIM900 = 0;
-    ThisThread::sleep_for(chrono::milliseconds(15000));
+    ThisThread::sleep_for(chrono::milliseconds(5000));
+    printf("Envio GSM encendido \n");
+    // EnableSIM900 = 0;
+    // ThisThread::sleep_for(chrono::milliseconds(5000));
+    // EnableSIM900 = 1;
 
     while(result==false)
     {
@@ -110,7 +112,7 @@ void EncenderSIM9002()
         // Gsm.recv("%s\r\n", valueRec);
 
         printf("encender result. %d\n",result);
-  ThisThread::sleep_for(chrono::milliseconds(1000));
+        ThisThread::sleep_for(chrono::milliseconds(1000));
         // if(result==false){
         //     printf("encencder------------\n");
         //     EnableSIM900 = 0;
@@ -120,10 +122,13 @@ void EncenderSIM9002()
         //     EnableSIM900 = 0;
         // }
 
-        if(Transcurrido>5000) {
-
+        if(Transcurrido>7000) 
+        {
             Transcurrido=0;
             BaseClock.reset();
+            EnableSIM900 = 0;
+            ThisThread::sleep_for(chrono::milliseconds(1500));
+            EnableSIM900 = 1;
         }
 
     }
@@ -131,7 +136,6 @@ void EncenderSIM9002()
     Transcurrido=0;
     BaseClock.reset();
     BaseClock.start();
-
 
     while(true)
     {
@@ -163,34 +167,33 @@ void EncenderSIM9002()
                 }
                 // printf("+++senal %s:+++\n",s.c_str());
             }
-            if(signal){
+            if(signal)
+            {
                 printf("Fin Encender, Modem con senal > 0\n");
                 break;
             }
-               
+                
         }
-        else{
+        else
+        {
             EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(500));
+            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 1;
-            ThisThread::sleep_for(chrono::milliseconds(2000));
-            EnableSIM900 = 0;
         }
 
         BaseClock.stop();
         Transcurrido = chrono::duration_cast<chrono::milliseconds>(BaseClock.elapsed_time()).count();
         BaseClock.start();
         printf("Current time %d\n",Transcurrido);
-        if(Transcurrido>60000) {
+        if(Transcurrido>60000) 
+        {
             printf("Timeout conexion CSQ\n");
             Transcurrido=0;
             BaseClock.reset();
             BaseClock.stop();
             EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(500));
+            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 1;
-            ThisThread::sleep_for(chrono::milliseconds(2000));
-            EnableSIM900 = 0;
             MasterCommand.Flush();
         }
     }
@@ -213,12 +216,12 @@ void ConexionGPRS()
 
     Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
     printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(2000));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
 
     Gsm.send("AT+CGPADDR"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
     printf("response AT+CGPADDR %s\n",valueRecv); 
-    ThisThread::sleep_for(chrono::milliseconds(2000));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
 
     printf("Next Step\n");
     commandByte[0]=NEXT_STEP;
@@ -228,19 +231,9 @@ void ConexionGPRS()
 // APAGA SIM POR SOFTWARE
 void ApagarSIM900()
 {
-    Gsm.send("AT+CPOWD=1\r\n");//Apaga modulo
+    Gsm.send("AT+CPOF\r\n");
+    printf("AT+CPOF %i\n",Gsm.recv("OK"));
     ThisThread::sleep_for(chrono::milliseconds(1000));
-    printf("T+CPOWD=1 %i\n",Gsm.recv("WD"));
-
-    // Gsm.send("AT\r\n");
-    // printf("AT+CPOWD=1 %i\n",Gsm.recv("WD"));
-    // printf("AT %i\n",Gsm.recv("OK"));
-
-    // ThisThread::sleep_for(chrono::milliseconds(100));
-
-    // EnableSIM900 = 1;
-    // ThisThread::sleep_for(chrono::milliseconds(600));
-    // EnableSIM900 = 0;
 }
 
 
@@ -254,20 +247,20 @@ void PostEncryptHTTP()
 
     Gsm.send("AT+HTTPINIT\r\n"); 
     printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
+    // ThisThread::sleep_for(chrono::milliseconds(500));
 
     Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
+    // ThisThread::sleep_for(chrono::milliseconds(500));
    
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
 
     sprintf(Len,"AT+HTTPDATA=%i,10000\r\n",(strlen(Encrypt)));// AT+HTTPDATA=AT+HTTPDATA/i  bytes 10s
     Gsm.send("%s",Len);
     Gsm.recv("OK");
-    ThisThread::sleep_for(chrono::milliseconds(200));
+    // ThisThread::sleep_for(chrono::milliseconds(200));
     Gsm.send("%s",Encrypt);
     ThisThread::sleep_for(chrono::milliseconds(500));
 
@@ -353,7 +346,7 @@ void RespuestaHTTP()
 void FinalizarComunicacion()
 {
     Gsm.send("AT+HTTPTERM"); 
-    ThisThread::sleep_for(chrono::milliseconds(500));
+    // ThisThread::sleep_for(chrono::milliseconds(500));
     printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
 }
 
@@ -361,7 +354,7 @@ void FinalizarComunicacion()
 void ReadUsuario()
 {
     printf("Read Usuario\n");
-    wait_us(1000000);
+    ThisThread::sleep_for(chrono::milliseconds(500));
     for(int i=0; i<172; i++) {
         Encrypt[i]=MasterCommand.Get();
         printf("-%c-",Encrypt[i]);
@@ -375,21 +368,61 @@ void ReadUsuario()
 void ConexionSIM900()
 {
     char ConectionEnable;
+    auto Transcurrido = 0;
+    ConectionEnable='A';
+
     Gsm.send("AT");
-    if(Gsm.recv("OK")) {
-        printf("Conectado\n");
-        ConectionEnable='A';
+
+    if(Gsm.recv("OK")==0){
+        printf("At = 0");
+        EnableSIM900 = 0;
+        ThisThread::sleep_for(chrono::milliseconds(1000));
+        EnableSIM900 = 1;
+
+        Gsm.send("AT");
+        BaseClock.reset();
+        BaseClock.start();
+
+
+        while(true){
+
+            BaseClock.stop();
+            Transcurrido = chrono::duration_cast<chrono::milliseconds>(BaseClock.elapsed_time()).count();
+            BaseClock.start();
+
+            if(Gsm.recv("OK")==1){
+                printf("AT OK\n");
+                break;
+            }
+            else{
+                printf("Esperando conexion \n");
+                Gsm.send("AT");
+                ThisThread::sleep_for(chrono::milliseconds(1000));
+            }
+
+            if(Transcurrido>30000) 
+            {
+                Transcurrido=0;
+                BaseClock.stop();
+                BaseClock.reset();
+                ConectionEnable='E';
+                printf("Timeout SIM sin conexion\n");
+                break;
+            }
+        }
+
     }
     else{
-        ConectionEnable='E';
+        printf("At = 1\n");
+        ThisThread::sleep_for(chrono::milliseconds(6000));
     }
 
-
+    printf("Enviando estado de conexion %s\n",&ConectionEnable);
     commandByteUsr[0]=ConectionEnable;
     Master.write(&commandByteUsr[0],1);
 
-    // wait(5);
-    // ApagarSIM900();
+    ThisThread::sleep_for(chrono::milliseconds(1000));
+    ApagarSIM900();
 }
 
 // VERIFICA SI HAY COBERTURA DE SIM900 CON LA RED DE DATOS 
@@ -401,9 +434,18 @@ void CoberturaSIM900()
     char * p;
     bool signal;
     
-    while(true){
+    Gsm.send("AT");
+    if(Gsm.recv("OK")==0){
+        printf("At = 0");
+        EnableSIM900 = 0;
+        ThisThread::sleep_for(chrono::milliseconds(1500));
+        EnableSIM900 = 1;
 
-        signal = true;
+    }
+
+    while(true)
+    {
+
         Gsm.send("AT+CSQ");
         printf("Confirmar calidad de la senal\n");
 
@@ -412,38 +454,96 @@ void CoberturaSIM900()
             Gsm.send("AT+CSQ");
             Gsm.read(valueCSQ, size);
             printf("---Calidad de la senal %s:---\n",valueCSQ);
-            p = strtok(valueCSQ, "\n");
 
-            while(p)
-            {    
-                p = strtok(NULL, "\n");
+            string ss = valueCSQ;
 
-                string s = p;
-
-                while(s.find("+CSQ: 0,0") != string::npos)
+            int index1 = ss.find(":");
+            int index2 = ss.find(",");
+            printf("index 1 %d\n",index1);
+            printf("index 2 %d\n",index2);
+            if(index1!=-1 && index2!=-1)
                 {
-                    printf("MODEM SIN SENAL \n");
-                    signal = false;
+                    if(index2-index1 == 4){
+                        string str2 = ss.substr(index1+2, 4);
+
+                        printf("Status  code %s \n",str2.c_str());
+                        printf("1er %c\n", str2.at(0));
+                        printf("2 %c\n", str2.at(1));
+                        printf("3 %c\n", str2.at(2));
+                        printf("4 %c\n", str2.at(3));
+
+                        char digit[1];
+
+    
+                        digit[0] = str2.at(0);
+                        Master.write(&digit[0],1);
+
+
+                        digit[0] = str2.at(1);
+                        Master.write(&digit[0],1);
+
+
+                        digit[0] = str2.at(3);
+                        Master.write(&digit[0],1);
+
+                        coberturaCSQ='A';
+                        commandByteUsr[0]=coberturaCSQ;
+                        Master.write(&commandByteUsr[0],1);
+                        ThisThread::sleep_for(chrono::milliseconds(200));
+
+                        break;
+        
+                    }
+                    else if(index2-index1 == 3){
+                        string str2 = ss.substr(index1+2, 3);
+
+                        printf("Status  code %s \n",str2.c_str());
+                        printf("1er %c\n", str2.at(index2-1));
+                        printf("2 %c\n", str2.at(1));
+                        printf("3 %c\n", str2.at(2));
+
+
+                        char digit[1];
+
+                        digit[0] = str2.at(0);
+                        Master.write(&digit[0],1);
+
+
+                        digit[0] = str2.at(1);
+                        Master.write(&digit[0],1);
+
+
+                        digit[0] = '0';
+                        Master.write(&digit[0],1);
+
+                        coberturaCSQ='A';
+                        commandByteUsr[0]=coberturaCSQ;
+                        Master.write(&commandByteUsr[0],1);
+                        ThisThread::sleep_for(chrono::milliseconds(200));
+                        break;
+        
+                    }
+                    else{   
+                        coberturaCSQ='E';
+                        commandByteUsr[0]=coberturaCSQ;
+                        Master.write(&commandByteUsr[0],1);
+                        ThisThread::sleep_for(chrono::milliseconds(200));
+                        break;
+                    }
+            }
+            else{
+                    coberturaCSQ='E';
+                    commandByteUsr[0]=coberturaCSQ;
+                    Master.write(&commandByteUsr[0],1);
+                    ThisThread::sleep_for(chrono::milliseconds(200));
                     break;
-                }
-            }
-            if(signal){
-                coberturaCSQ='A';
-                printf("Fin Encender, Modem con senal > 0\n");
-                break;
-            }
-               
+                }  
         }
-        else{
-            coberturaCSQ='E';
-        }
+
     }
 
-    commandByteUsr[0]=coberturaCSQ;
-    Master.write(&commandByteUsr[0],1);
-
-    // ApagarSIM900();
-    // wait_us(3900000);
+    ApagarSIM900();
+    ThisThread::sleep_for(chrono::milliseconds(1000));
 }
 
 
@@ -457,9 +557,9 @@ void Step1()
     BaseClock.reset();
     EncenderSIM9002();
     BaseClock.stop();
-    ThisThread::sleep_for(chrono::milliseconds(200));
+    // ThisThread::sleep_for(chrono::milliseconds(200));
 
- 
+    MasterCommand.Flush();
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
 
@@ -495,7 +595,7 @@ void Step3()
 // BYPASS
 void Step4()
 {
-    ThisThread::sleep_for(chrono::milliseconds(200));
+    // ThisThread::sleep_for(chrono::milliseconds(200));
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
 
@@ -510,7 +610,7 @@ void Step5()
 
     Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
     printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(2000));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
 
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -525,7 +625,7 @@ void Step6()
     Gsm.send("AT+CGPADDR"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
     printf("response AT+CGPADDR %s\n",valueRecv); 
-    ThisThread::sleep_for(chrono::milliseconds(2000));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
 
 
     commandByte[0]=NEXT_STEP;
@@ -554,7 +654,7 @@ void Step8()
 {
     // char HostingData[]="{\"municipio\":\"Santa Ana\",\"id\":0000, \"alerts\":\"000000\"}\r\n";
     // printf("Data hosting %s\n",HostingData);
-    ThisThread::sleep_for(chrono::milliseconds(100));
+    // ThisThread::sleep_for(chrono::milliseconds(100));
     // Municipio
     HostingData[14]=MasterCommand.Get();
     HostingData[15]=MasterCommand.Get();
@@ -580,7 +680,7 @@ void Step8()
 
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(500));
     // PrintSerialRepeat("AT+HTTPPARA=\"CONTENT\",\"application/json\"\r\n","OK",500,75);    // AT+HTTPPARA="CONTENT","application/json"
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
@@ -727,7 +827,11 @@ void Step11()
     HostingAnswer[3]='0';
     HostingAnswer[4]='0';
     HostingAnswer[5]='0';
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
+
+    Gsm.send("AT+CPOF\r\n");//Apaga modulo
     ThisThread::sleep_for(chrono::milliseconds(1000));
+    printf("AT+CPOF %i\n",Gsm.recv("OK"));
 }
 
 int main()
@@ -772,11 +876,11 @@ int main()
     // Step11();
     // ThisThread::sleep_for(chrono::milliseconds(120000));
 
-        if(isSerialInterrupt){
+        // if(isSerialInterrupt){
 
-            printf("Serial Interrupt %d\n",buff[0]);
-            isSerialInterrupt=false;
-        }
+        //     printf("Serial Interrupt %d\n",buff[0]);
+        //     isSerialInterrupt=false;
+        // }
 
         if(Button==0) 
         {
@@ -842,6 +946,7 @@ int main()
                     BaseClock.start();
                     BaseClock.reset();
                     CoberturaSIM900();
+                    MasterCommand.Flush();
                     BaseClock.stop();
                     break;
 
@@ -850,14 +955,15 @@ int main()
                     BaseClock.start();
                     BaseClock.reset();
                     ConexionSIM900();
+                    MasterCommand.Flush();
                     BaseClock.stop();
                     break;
 
                 case COMMAND_OFF:
                     printf("-> -> Apagar\n");
                     MasterCommand.Flush();
-                    // ApagarSIM900();
-                    ThisThread::sleep_for(chrono::milliseconds(2000));
+                    ApagarSIM900();
+                    ThisThread::sleep_for(chrono::milliseconds(1000));
                     // BaseClock.stop();
 
                     // // SOLO PARA PRUEBAS
@@ -869,7 +975,8 @@ int main()
                     printf("------------Paso 1!\n");
                     // BaseClock.start();
                     // BaseClock.reset();
-                    MasterCommand.Flush();
+                    // MasterCommand.Flush();
+                    Led=1;
                     Step1();
 
                     // Command = HOSTING_STEP2;
@@ -877,6 +984,7 @@ int main()
 
                 case HOSTING_STEP2:
                     printf("------------Paso 2!\n");                                // Respuesta SHUT OK
+                    Led=0;
                     Step2();
 
                     // Command = HOSTING_STEP3;
@@ -884,6 +992,7 @@ int main()
 
                 case HOSTING_STEP3:
                     printf("------------Paso 3!\n");
+                    Led=1;
                     Step3();
 
                     // Command = HOSTING_STEP4;
@@ -891,6 +1000,7 @@ int main()
 
                 case HOSTING_STEP4:
                     printf("------------Paso 4!\n");
+                    Led=0;
                     Step4();                                                    // Respuesta OK
 
                     // Command = HOSTING_STEP5;
@@ -898,6 +1008,7 @@ int main()
 
                 case HOSTING_STEP5:
                     printf("------------Paso 5!\n");
+                    Led=1;
                     Step5();
 
                     // Command = HOSTING_STEP6;
@@ -905,6 +1016,7 @@ int main()
 
                 case HOSTING_STEP6:
                     printf("------------Paso 6!\n");
+                    Led=0;
                     Step6();
 
                     // Command = HOSTING_STEP7;
@@ -912,6 +1024,7 @@ int main()
 
                 case HOSTING_STEP7:
                     printf("------------Paso 7!\n");
+                    Led=1;
                     Step7();
 
                     // Command = HOSTING_STEP8;
@@ -919,6 +1032,7 @@ int main()
 
                 case HOSTING_STEP8:
                     printf("------------Paso 8!\n");
+                    Led=0;
                     Step8();
 
                     // Command = HOSTING_STEP9;
@@ -926,20 +1040,24 @@ int main()
 
                 case HOSTING_STEP9:
                     printf("------------Paso 9!\n");
+                    Led=1;
                     Step9();
                     // Command = HOSTING_STEP10;
                     break;
 
                 case HOSTING_STEP10:
                     printf("------------Paso 10!\n");
+                    Led=0;
                     Step10();
                     // Command = HOSTING_STEP11;
                     break;
 
                 case HOSTING_STEP11:
                     printf("------------Paso 11!\n");
+                    Led=1;
                     MasterCommand.Flush();
                     Step11();
+                    Led=0;
                     // BaseClock.stop();
 
                     // Command = HOSTING_OFF;
