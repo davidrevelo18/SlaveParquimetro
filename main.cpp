@@ -76,9 +76,10 @@ void on_rx_interrupt()
 }
 
 // METODO PARA ENCENCED SIM Y ASEGURAR CONEXION A LA RED
-void EncenderSIM9002()
+void EncenderSIM9002(int timeoutEncender)
 {
     bool result = false;
+    bool resultCSQ = false;
     auto Transcurrido = 0;
     char valueCSQ[100];
     int size;
@@ -90,14 +91,12 @@ void EncenderSIM9002()
 
     printf("Inicia bucle encencder \n");
 
-    EnableSIM900 = 0;
-    ThisThread::sleep_for(chrono::milliseconds(1500));
     EnableSIM900 = 1;
-    ThisThread::sleep_for(chrono::milliseconds(5000));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
+    EnableSIM900 = 0;
+    ThisThread::sleep_for(chrono::milliseconds(timeoutEncender));
     printf("Envio GSM encendido \n");
-    // EnableSIM900 = 0;
-    // ThisThread::sleep_for(chrono::milliseconds(5000));
-    // EnableSIM900 = 1;
+
 
     while(result==false)
     {
@@ -112,23 +111,15 @@ void EncenderSIM9002()
         // Gsm.recv("%s\r\n", valueRec);
 
         printf("encender result. %d\n",result);
-        ThisThread::sleep_for(chrono::milliseconds(1000));
-        // if(result==false){
-        //     printf("encencder------------\n");
-        //     EnableSIM900 = 0;
-        //     ThisThread::sleep_for(chrono::milliseconds(500));
-        //     EnableSIM900 = 1;
-        //     ThisThread::sleep_for(chrono::milliseconds(2000));
-        //     EnableSIM900 = 0;
-        // }
 
-        if(Transcurrido>7000) 
+
+        if(Transcurrido>10000) 
         {
             Transcurrido=0;
             BaseClock.reset();
-            EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 1;
+            ThisThread::sleep_for(chrono::milliseconds(1500));
+            EnableSIM900 = 0;
         }
 
     }
@@ -176,9 +167,9 @@ void EncenderSIM9002()
         }
         else
         {
-            EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 1;
+            ThisThread::sleep_for(chrono::milliseconds(1500));
+            EnableSIM900 = 0;
         }
 
         BaseClock.stop();
@@ -191,9 +182,9 @@ void EncenderSIM9002()
             Transcurrido=0;
             BaseClock.reset();
             BaseClock.stop();
-            EnableSIM900 = 0;
-            ThisThread::sleep_for(chrono::milliseconds(1500));
             EnableSIM900 = 1;
+            ThisThread::sleep_for(chrono::milliseconds(1500));
+            EnableSIM900 = 0;
             MasterCommand.Flush();
         }
     }
@@ -375,9 +366,9 @@ void ConexionSIM900()
 
     if(Gsm.recv("OK")==0){
         printf("At = 0");
-        EnableSIM900 = 0;
-        ThisThread::sleep_for(chrono::milliseconds(1000));
         EnableSIM900 = 1;
+        ThisThread::sleep_for(chrono::milliseconds(1000));
+        EnableSIM900 = 0;
 
         Gsm.send("AT");
         BaseClock.reset();
@@ -437,9 +428,9 @@ void CoberturaSIM900()
     Gsm.send("AT");
     if(Gsm.recv("OK")==0){
         printf("At = 0");
-        EnableSIM900 = 0;
-        ThisThread::sleep_for(chrono::milliseconds(1500));
         EnableSIM900 = 1;
+        ThisThread::sleep_for(chrono::milliseconds(1500));
+        EnableSIM900 = 0;
 
     }
 
@@ -555,7 +546,7 @@ void Step1()
     printf("Encender\n");
     BaseClock.start();
     BaseClock.reset();
-    EncenderSIM9002();
+    EncenderSIM9002(10000);
     BaseClock.stop();
     // ThisThread::sleep_for(chrono::milliseconds(200));
 
@@ -888,7 +879,7 @@ int main()
             BaseClock.start();
             BaseClock.reset();
             printf("Button\n");
-            EncenderSIM9002();
+            EncenderSIM9002(10000);
             
             BaseClock.stop();
             Led=0;
@@ -905,7 +896,7 @@ int main()
                    printf("-> -> Encender\n");
                     BaseClock.start();
                     BaseClock.reset();
-                    EncenderSIM9002();
+                    EncenderSIM9002(3000);
                     BaseClock.stop();
                     Led = 0;
                     break;
@@ -1103,28 +1094,19 @@ int main()
 // 12.HOSTING_OFF    ---> Comando HTTPTERM en caso de choque con usuario.
 
 // AT
-// AT+CPIN?
 // AT+CSQ
-// AT+CREG=1
-// AT+CGATT=1 
-// AT+SAPBR=3,1,"Contype","GPRS"
-// AT+SAPBR=3,1,"APN","internet.comcel.com.co"
-// AT+SAPBR=3,1,"USER","COMCELWEB"
-// AT+SAPBR=3,1,"PWD","COMCELWEB"
-// AT+SAPBR=1,1
-// AT+SAPBR=2,1
+// AT+CGSOCKCONT=1,"IP","internet.comcel.com.co"
+// AT+CGPADDR
 // AT+HTTPINIT
-// AT+HTTPPARA="CID",1
-// AT+HTTPPARA="REDIR",1
 // AT+HTTPPARA="URL","http://34.211.174.1/AIGRest/AIGService/parkPQ"
 // AT+HTTPPARA="URL","http://34.211.174.1/AIGRest/AIGService/alertPQ"
-// AT+HTTPDATA=56,100000
+// AT+HTTPPARA="CONTENT","application/json"
+// AT+HTTPDATA=56,10000
 // {"municipio":"San Jose","id":"1068","alerts":"AAAAAA"}
 // AT+HTTPACTION=1
 // AT+HTTPREAD=0,9000
-
 // AT+HTTPTERM
-// AT+SAPBR=0,1
+
 
  
 
