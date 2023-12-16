@@ -54,6 +54,7 @@ char Encrypt[174];
 // char HostingData[]="{\"municipio\":\"San Jose\",\"id\":\"1068\",\"alerts\":\"AAAAAA\"}\r\n";
 char HostingData[]="{\"municipio\":\"xxxxxxxx\",\"id\":\"xxxx\",\"alerts\":\"xxxxxx\"}\r\n";
 char HostingAnswer[]="OK+000+00:00";
+char userAnswer[]="0000000+00:00+0000-00-00";
 
 /* VARIABLES PARA INTERRUPCION SERIAL MAESTRO/ESCLAVO */
 char c;
@@ -293,6 +294,8 @@ void RespuestaHTTP()
 
     char value2[100];
     int val;
+    char * caract;
+    bool okUserResponse = 0;
 
     if(okStatusUsr==0)
     {
@@ -304,15 +307,58 @@ void RespuestaHTTP()
         printf("value %s\n", value2);
         printf("size read=%d \n",val);
 
-        if(true) {
+        printf("<--Hosting Answer User--%s-->\n",value2);
+        caract = strtok(value2, "\n");
+
            
-            // printf("Aceptada\n");
-            printf("<--Hosting Answer User--%s-->\n",value2);
-            Master.write(value2,sizeof(value2));
-            commandByteUsr[0]='A';
-            Master.write(&commandByteUsr[0],1);
+        while(caract)
+        {
+            caract = strtok(NULL, "\n");
+            string s = caract;
+            int index = s.find("OK+");
+            if(index!=-1)
+            {
+                userAnswer[0]=value2[32];
+                userAnswer[1]=value2[33];
+                userAnswer[2]=value2[34];
+                userAnswer[3]=value2[35];
+                userAnswer[4]=value2[36];
+                userAnswer[5]=value2[37];
+                userAnswer[6]=value2[38];
+
+                userAnswer[7]=value2[39];
+
+                userAnswer[8]=value2[40];
+                userAnswer[9]=value2[41];
+                userAnswer[10]=value2[42];
+                userAnswer[11]=value2[43];
+                userAnswer[12]=value2[44];
+
+                userAnswer[13]=value2[45];
+
+                userAnswer[14]=value2[46];
+                userAnswer[15]=value2[47];
+                userAnswer[16]=value2[48];
+                userAnswer[17]=value2[49];
+                userAnswer[18]=value2[50];
+                userAnswer[19]=value2[51];
+                userAnswer[20]=value2[52];
+                userAnswer[21]=value2[53];
+                userAnswer[22]=value2[54];
+                userAnswer[23]=value2[55];
+
+                Master.write(userAnswer,sizeof(userAnswer));
+                commandByteUsr[0]='A';
+                Master.write(&commandByteUsr[0],1);
+                okUserResponse = 1;
+
+                break;
+
+            }
+
+        }
  
-        } else {
+         if(okUserResponse==0) {
             printf("Rechazada\n");
             commandByteUsr[0]='R';
             Master.write(&commandByteUsr[0],1);
@@ -827,7 +873,7 @@ void Step11()
 
 int main()
 {
-    printf("\n-----------Paquimetro/Slave v1.1\n");
+    printf("\n-----------Paquimetro/Slave v1.2\n");
     // t.start(callback(&eventQueue, &EventQueue::dispatch_forever));
     // Master.sigio(callback(onSigio));
    
