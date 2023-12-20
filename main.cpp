@@ -114,7 +114,7 @@ void EncenderSIM9002(int timeoutEncender)
         printf("encender result. %d\n",result);
 
 
-        if(Transcurrido>10000) 
+        if(Transcurrido>15000) 
         {
             Transcurrido=0;
             BaseClock.reset();
@@ -884,7 +884,7 @@ int main()
     Led=0;
     ResetSIM900=0;
     // Gsm.debug_on(false);
-    // Gsm.set_timeout(1000);
+    Gsm.set_timeout(1000);
 
     while (true) 
     {
@@ -942,7 +942,7 @@ int main()
                    printf("-> -> Encender\n");
                     BaseClock.start();
                     BaseClock.reset();
-                    EncenderSIM9002(3000);
+                    EncenderSIM9002(10000);
                     BaseClock.stop();
                     Led = 0;
                     break;
