@@ -99,7 +99,7 @@ void EncenderSIM9002(int timeoutEncender)
     printf("Envio GSM encendido \n");
 
 
-    while(result==false)
+    while(true)
     {
         char valueRec[100];
         printf("Envia AT encender \n");
@@ -108,14 +108,17 @@ void EncenderSIM9002(int timeoutEncender)
         BaseClock.stop();
         Transcurrido = chrono::duration_cast<chrono::milliseconds>(BaseClock.elapsed_time()).count();
         BaseClock.start();
-        result =  Gsm.recv("OK");
+
         // Gsm.recv("%s\r\n", valueRec);
+        if(Gsm.recv("OK")==1)
+            break;
 
-        printf("encender result. %d\n",result);
+        printf("esperando encendido \n");
 
 
-        if(Transcurrido>15000) 
+        if(Transcurrido>10000) 
         {
+            printf("timeout encender \n");
             Transcurrido=0;
             BaseClock.reset();
             EnableSIM900 = 1;
@@ -195,6 +198,7 @@ void EncenderSIM9002(int timeoutEncender)
 void IniciarSIM900()
 {
     printf("Modem iniciado\n");
+    //ThisThread::sleep_for(chrono::milliseconds(1000));
 }
 
 // CONFIGURACION GPRS Y APN DE LA CONEXION
@@ -208,7 +212,7 @@ void ConexionGPRS()
 
     Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
     printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
-    // ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
 
     Gsm.send("AT+CGPADDR"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
@@ -286,6 +290,14 @@ void PostEncryptHTTP()
 
     }
 
+}
+
+// TERMINA CONEXION HTTP CON MODEM
+void FinalizarComunicacion()
+{
+    Gsm.send("AT+HTTPTERM"); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+    printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
 }
 
 // RECIBE RESPUESTA HTTP SI STATUS ES 200
@@ -370,7 +382,8 @@ void RespuestaHTTP()
         Master.write(&commandByteUsr[0],1);
     }
 
-
+    FinalizarComunicacion();
+    ApagarSIM900();
     // Gsm.send("AT+HTTPTERM"); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
     // printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
@@ -379,13 +392,6 @@ void RespuestaHTTP()
     // printf("AT+SAPBR=0,1 %i\r\n",Gsm.recv("OK")); 
 }
 
-// TERMINA CONEXION HTTP CON MODEM
-void FinalizarComunicacion()
-{
-    Gsm.send("AT+HTTPTERM"); 
-    // ThisThread::sleep_for(chrono::milliseconds(500));
-    printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
-}
 
 // LEE INFORNACION DEL USUARIO A TRAVES DEL MAESTRO
 void ReadUsuario()
@@ -458,7 +464,7 @@ void ConexionSIM900()
     commandByteUsr[0]=ConectionEnable;
     Master.write(&commandByteUsr[0],1);
 
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
     ApagarSIM900();
 }
 
@@ -580,7 +586,7 @@ void CoberturaSIM900()
     }
 
     ApagarSIM900();
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
 }
 
 
@@ -884,7 +890,7 @@ int main()
     Led=0;
     ResetSIM900=0;
     // Gsm.debug_on(false);
-    Gsm.set_timeout(1000);
+    Gsm.set_timeout(2000);
 
     while (true) 
     {
@@ -931,7 +937,7 @@ int main()
             Led=0;
         }   
         // wait_us(2000000);
-      
+      bool st;
         while(MasterCommand.Available()>0) {
             printf("Get command \n");
             Command=MasterCommand.Get();
@@ -940,42 +946,54 @@ int main()
             switch (Command) {
                 case COMMAND_ON:
                    printf("-> -> Encender\n");
+                    Led = 1;
                     BaseClock.start();
                     BaseClock.reset();
                     EncenderSIM9002(10000);
                     BaseClock.stop();
-                    Led = 0;
                     break;
 
                 case COMMAND_INIT:
+                    Led = 0;
                     printf("-> -> Iniciar\n");
+                    Gsm.send("AT\r\n");
+                    st = Gsm.recv("OK");
+                    printf("st %d",st);
+                    if(st==0) 
+                        EncenderSIM9002(10000);
                     IniciarSIM900();
                     break;
 
                 case COMMAND_GPRS:
+                    Led = 1;
                     printf("-> -> GPRS\n");
                     ConexionGPRS();
                     break;
 
                 case COMMAND_DATA:
+                    Led = 0;
                     printf("-> -> Datos\n");
                     ReadUsuario();
                     break;
 
                 case COMMAND_POST:
+                    Led = 1;
                     printf("-> -> Post HTTP\n");
                     PostEncryptHTTP();
                     break;
 
                 case COMMAND_ANSWER:
+                    Led = 0;
                     printf("-> -> Respuesta\n");
                     RespuestaHTTP();
                     break;
 
                 case COMMAND_END :
+                    Led = 1;
                     printf("-> -> finalizar tiempo\n");
                     
                     FinalizarComunicacion();
+                    Led = 0;
                     break;
 
                 case COMMAND_SIGNAL:
@@ -998,9 +1016,9 @@ int main()
 
                 case COMMAND_OFF:
                     printf("-> -> Apagar\n");
-                    MasterCommand.Flush();
                     ApagarSIM900();
-                    ThisThread::sleep_for(chrono::milliseconds(1000));
+                    MasterCommand.Flush();
+                    // ThisThread::sleep_for(chrono::milliseconds(1000));
                     // BaseClock.stop();
 
                     // // SOLO PARA PRUEBAS
