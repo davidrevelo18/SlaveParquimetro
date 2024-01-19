@@ -87,8 +87,6 @@ void EncenderSIM9002(int timeoutEncender)
     char * p;
     bool signal;
 
-    BaseClock.reset();
-    BaseClock.start();
 
     printf("Inicia bucle encencder \n");
 
@@ -98,6 +96,8 @@ void EncenderSIM9002(int timeoutEncender)
     ThisThread::sleep_for(chrono::milliseconds(timeoutEncender));
     printf("Envio GSM encendido \n");
 
+    BaseClock.reset();
+    BaseClock.start();
 
     while(true)
     {
@@ -699,6 +699,21 @@ void Step8()
     // printf("Data hosting %s\n",HostingData);
     // ThisThread::sleep_for(chrono::milliseconds(100));
     // Municipio
+    // char tempC[2]="";
+    // int base;
+    // for(int i=14;i<24;i++){
+    //     tempC[0]=MasterCommand.Get();
+    //     printf("tempc0 %c\n",tempC[0]);
+    //     if(tempC[0] == '#'){
+    //         base = i-1;
+    //         printf("Base %d\n", base);
+    //         break;
+    //     }
+    //     else {
+    //         HostingData[i]=tempC[0];
+    //     }
+           
+    // }
     HostingData[14]=MasterCommand.Get();
     HostingData[15]=MasterCommand.Get();
     HostingData[16]=MasterCommand.Get();
@@ -939,9 +954,6 @@ int main()
         // wait_us(2000000);
       bool st;
         while(MasterCommand.Available()>0) {
-            printf("Get command \n");
-            Command=MasterCommand.Get();
-            printf("Current command %d\n",Command);
 
             switch (Command) {
                 case COMMAND_ON:
