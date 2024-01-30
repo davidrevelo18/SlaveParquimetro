@@ -53,7 +53,7 @@ QUEUE MasterCommand;
 char Encrypt[174];  
 // char HostingData[]="{\"municipio\":\"San Jose\",\"id\":\"1068\",\"alerts\":\"AAAAAA\"}\r\n";
 char HostingData[]="{\"municipio\":\"xxxxxxxx\",\"id\":\"xxxx\",\"alerts\":\"xxxxxx\"}\r\n";
-char HostingAnswer[]="OK+000+00:00";
+char HostingAnswer[]="OK+000+00:00+00+           ";
 char userAnswer[]="0000000+00:00+0000-00-00";
 
 /* VARIABLES PARA INTERRUPCION SERIAL MAESTRO/ESCLAVO */
@@ -257,7 +257,6 @@ void ReadUsuario()
 
     commandByteUsr[0]=NEXT_STEP;
     Master.write(&commandByteUsr[0],1);
-
 }
 
 // CONEXION A ENDPOINT parkPQ
@@ -345,6 +344,8 @@ void RespuestaHTTP()
             caract = strtok(NULL, "\n");
             string s = caract;
             int index = s.find("OK+");
+            int indexErrorDate = s.find("ER_DATE");
+
             if(index!=-1)
             {
                 userAnswer[0]=value2[32];
@@ -382,8 +383,17 @@ void RespuestaHTTP()
                 okUserResponse = 1;
 
                 break;
-
             }
+             if(indexErrorDate!=-1)
+            {
+                Master.write("ER_DATE",sizeof("ER_DATE"));
+                ThisThread::sleep_for(chrono::milliseconds(200));
+                commandByteUsr[0]='R';
+                Master.write(&commandByteUsr[0],1);
+                okUserResponse = 1;
+                break;
+            }
+
         }
  
          if(okUserResponse==0) {
@@ -849,6 +859,20 @@ void Step10()
             HostingAnswer[11]=value2[39];
 
             HostingAnswer[12]=value2[40];
+            HostingAnswer[13]=value2[41];
+            HostingAnswer[14]=value2[42];
+            HostingAnswer[15]=value2[43];
+            HostingAnswer[16]=value2[44];
+            HostingAnswer[17]=value2[45];
+            HostingAnswer[18]=value2[46];
+            HostingAnswer[19]=value2[47];
+            HostingAnswer[20]=value2[48];
+            HostingAnswer[21]=value2[49];  
+            HostingAnswer[22]=value2[50];
+            HostingAnswer[23]=value2[51];
+            HostingAnswer[24]=value2[52];
+            HostingAnswer[25]=value2[53];   
+            HostingAnswer[26]=value2[54];   
 
             // for(int i=0;i<47;i++){
             // printf("CARACETER %d %c\n",i,value2[i]);
