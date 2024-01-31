@@ -101,7 +101,7 @@ void EncenderSIM9002(int timeoutEncender)
 
     while(true)
     {
-        char valueRec[100];
+        //char valueRec[100];
         printf("Envia AT encender \n");
         Gsm.send("AT");
 
@@ -116,7 +116,7 @@ void EncenderSIM9002(int timeoutEncender)
         printf("esperando encendido \n");
 
 
-        if(Transcurrido>10000) 
+        if(Transcurrido>8000) 
         {
             printf("timeout encender \n");
             Transcurrido=0;
@@ -219,7 +219,19 @@ void ConexionGPRS()
     printf("response AT+CGPADDR %s\n",valueRecv); 
     // ThisThread::sleep_for(chrono::milliseconds(1000));
 
+    Gsm.send("AT+HTTPINIT\r\n"); 
+    printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+
+    Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
+    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
+    // ThisThread::sleep_for(chrono::milliseconds(500));
+   
+    Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
+    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
+    // ThisThread::sleep_for(chrono::milliseconds(1000));
     printf("Next Step\n");
+    
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);                          
 }
@@ -234,7 +246,8 @@ void ApagarSIM900()
 
 // LEE INFORNACION DEL USUARIO A TRAVES DEL MAESTRO
 void ReadUsuario()
-{
+{    
+    char Len[24];    
     printf("Read Usuario\n");
     ThisThread::sleep_for(chrono::milliseconds(500));
     for(int i=0; i<172; i++) {
@@ -243,17 +256,11 @@ void ReadUsuario()
     }
     Encrypt[173]='\r';
 
-    Gsm.send("AT+HTTPINIT\r\n"); 
-    printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
-    // ThisThread::sleep_for(chrono::milliseconds(500));
-
-    Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
-    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
-    // ThisThread::sleep_for(chrono::milliseconds(500));
-   
-    Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
-    printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    // ThisThread::sleep_for(chrono::milliseconds(1000));
+    sprintf(Len,"AT+HTTPDATA=%i,10000\r\n",(strlen(Encrypt)));// AT+HTTPDATA=AT+HTTPDATA/i  bytes 10s
+    Gsm.send("%s",Len);
+    Gsm.recv("OK");
+    // ThisThread::sleep_for(chrono::milliseconds(200));
+    Gsm.send("%s",Encrypt);
 
     commandByteUsr[0]=NEXT_STEP;
     Master.write(&commandByteUsr[0],1);
@@ -262,19 +269,12 @@ void ReadUsuario()
 // CONEXION A ENDPOINT parkPQ
 void PostEncryptHTTP() 
 {
-    char Len[24];    
+
     char value2[100];
     int val;
     char * caract;
 
-
-
-    sprintf(Len,"AT+HTTPDATA=%i,10000\r\n",(strlen(Encrypt)));// AT+HTTPDATA=AT+HTTPDATA/i  bytes 10s
-    Gsm.send("%s",Len);
-    Gsm.recv("OK");
-    // ThisThread::sleep_for(chrono::milliseconds(200));
-    Gsm.send("%s",Encrypt);
-    ThisThread::sleep_for(chrono::milliseconds(300));
+    ThisThread::sleep_for(chrono::milliseconds(400));
 
     Gsm.send("AT+HTTPACTION=1\r\n"); 
     Gsm.recv("OK");
