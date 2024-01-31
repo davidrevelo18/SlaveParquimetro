@@ -991,7 +991,7 @@ int main()
                     Led = 1;
                     BaseClock.start();
                     BaseClock.reset();
-                    EncenderSIM9002(9000);
+                    EncenderSIM9002(10000);
                     BaseClock.stop();
                     break;
 
