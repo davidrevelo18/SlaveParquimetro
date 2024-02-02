@@ -74,6 +74,7 @@ void on_rx_interrupt()
     buff[0] = c; 
     isSerialInterrupt = true;
     MasterCommand.Put(c);
+    Master.sync();
 }
 
 // METODO PARA ENCENCED SIM Y ASEGURAR CONEXION A LA RED
@@ -212,7 +213,7 @@ void ConexionGPRS()
 
     Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
     printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1500));
+    ThisThread::sleep_for(chrono::milliseconds(1600));
 
     Gsm.send("AT+CGPADDR"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
@@ -274,13 +275,13 @@ void PostEncryptHTTP()
     int val;
     char * caract;
 
-    ThisThread::sleep_for(chrono::milliseconds(400));
+    ThisThread::sleep_for(chrono::milliseconds(500));
 
     Gsm.send("AT+HTTPACTION=1\r\n"); 
     Gsm.recv("OK");
     Gsm.read(value2, val);
     printf("value %s\n", value2);
-    ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(1100));
     Gsm.read(value2, val);
     printf("value action %s\n", value2);
 
@@ -311,9 +312,11 @@ void PostEncryptHTTP()
 // TERMINA CONEXION HTTP CON MODEM
 void FinalizarComunicacion()
 {
+    MasterCommand.Flush();
     Gsm.send("AT+HTTPTERM"); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
     printf("AT+HTTPTERM %i\r\n",Gsm.recv("OK")); 
+
 }
 
 // RECIBE RESPUESTA HTTP SI STATUS ES 200
@@ -410,7 +413,7 @@ void RespuestaHTTP()
         Master.write(&commandByteUsr[0],1);
     }
 
-    // FinalizarComunicacion();
+    FinalizarComunicacion();
     // ApagarSIM900();
 
     // Gsm.send("AT+HTTPTERM"); 
@@ -617,7 +620,7 @@ void Step1()
     BaseClock.stop();
     // ThisThread::sleep_for(chrono::milliseconds(200));
 
-    MasterCommand.Flush();
+    //MasterCommand.Flush();
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
 
@@ -923,7 +926,7 @@ void Step11()
 
 int main()
 {
-    printf("\n-----------Paquimetro/Slave v1.2\n");
+    printf("\n-----------Paquimetro/Slave v3.0\n");
     // t.start(callback(&eventQueue, &EventQueue::dispatch_forever));
     // Master.sigio(callback(onSigio));
    
@@ -1043,7 +1046,7 @@ int main()
                     BaseClock.start();
                     BaseClock.reset();
                     CoberturaSIM900();
-                    MasterCommand.Flush();
+                    //MasterCommand.Flush();
                     BaseClock.stop();
                     break;
 
@@ -1052,13 +1055,13 @@ int main()
                     BaseClock.start();
                     BaseClock.reset();
                     ConexionSIM900();
-                    MasterCommand.Flush();
+                    //MasterCommand.Flush();
                     BaseClock.stop();
                     break;
 
                 case COMMAND_OFF:
                     printf("-> -> Apagar\n");
-                    FinalizarComunicacion();
+                    //FinalizarComunicacion();
                     ApagarSIM900();
                     MasterCommand.Flush();
                     // ThisThread::sleep_for(chrono::milliseconds(1000));
