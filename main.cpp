@@ -1,5 +1,6 @@
 #include "Timeout.h"
 #include "mbed.h"
+#include <cstddef>
 #include <cstdio>
 #include <string>
 #include "Queue.h"
@@ -64,8 +65,9 @@ char commandByte[1];
 char commandByteUsr[1];
 
 /* VARIABLES DE ESTATUS HTTP*/
-bool okStatus = 0;
-bool okStatusUsr = 0;
+bool okStatus = 1;
+bool okStatusUsr = 1;
+bool postReSent= 0;
 
 // INTERRUPCION DE RECEPCION SERIAL MAESTRO-ESCLAVO
 void on_rx_interrupt()
@@ -218,7 +220,7 @@ void ConexionGPRS()
     Gsm.send("AT+CGPADDR"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
     printf("response AT+CGPADDR %s\n",valueRecv); 
-    // ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(200));
 
     Gsm.send("AT+HTTPINIT\r\n"); 
     printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
@@ -226,15 +228,17 @@ void ConexionGPRS()
 
     Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
-    // ThisThread::sleep_for(chrono::milliseconds(500));
+    ThisThread::sleep_for(chrono::milliseconds(200));
    
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    // ThisThread::sleep_for(chrono::milliseconds(1000));
+    ThisThread::sleep_for(chrono::milliseconds(400));
     printf("Next Step\n");
     
     commandByte[0]=NEXT_STEP;
-    Master.write(&commandByte[0],1);                          
+    Master.write(&commandByte[0],1);   
+
+    ThisThread::sleep_for(chrono::milliseconds(200));                       
 }
 
 // APAGA SIM POR SOFTWARE
@@ -268,7 +272,7 @@ void ReadUsuario()
 }
 
 // CONEXION A ENDPOINT parkPQ
-void PostEncryptHTTP() 
+void PostEncryptHTTP(bool resend) 
 {
 
     char value2[100];
@@ -277,11 +281,14 @@ void PostEncryptHTTP()
 
     ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+HTTPACTION=1\r\n"); 
-    Gsm.recv("OK");
+    if(resend==0){
+        Gsm.send("AT+HTTPACTION=1\r\n"); 
+        Gsm.recv("OK");
+    }
+
     Gsm.read(value2, val);
     printf("value %s\n", value2);
-    ThisThread::sleep_for(chrono::milliseconds(1100));
+    ThisThread::sleep_for(chrono::milliseconds(2000));
     Gsm.read(value2, val);
     printf("value action %s\n", value2);
 
@@ -292,6 +299,7 @@ void PostEncryptHTTP()
 
         caract = strtok(NULL, "\n");
         string s = caract;
+        //printf("Character %s\n",s.c_str());
         int index = s.find(",");
         if(index!=-1)
         {
@@ -300,11 +308,15 @@ void PostEncryptHTTP()
             printf("Status  code %s \n",str2.c_str());
 
             okStatusUsr = str2.compare("200");
-            printf("OKSTATuS %d\n",okStatus);
+            printf("OKSTATuS %d\n",okStatusUsr);
             break;
 
         }
 
+    }
+    if(okStatusUsr!=0 && postReSent==0){
+        postReSent = 1;
+        PostEncryptHTTP(1); 
     }
 
 }
@@ -331,9 +343,9 @@ void RespuestaHTTP()
     if(okStatusUsr==0)
     {
         Gsm.send("AT+HTTPREAD"); 
-        ThisThread::sleep_for(chrono::milliseconds(200));
+        ThisThread::sleep_for(chrono::milliseconds(100));
         Gsm.read(value2, val);
-        ThisThread::sleep_for(chrono::milliseconds(200));
+        ThisThread::sleep_for(chrono::milliseconds(100));
 
         printf("value %s\n", value2);
         printf("size read=%d \n",val);
@@ -348,6 +360,7 @@ void RespuestaHTTP()
             string s = caract;
             int index = s.find("OK+");
             int indexErrorDate = s.find("ER_DATE");
+            int indexErrorHttp = s.find("ERROR");
 
             if(index!=-1)
             {
@@ -396,6 +409,10 @@ void RespuestaHTTP()
                 okUserResponse = 1;
                 break;
             }
+            if(indexErrorHttp!=-1)
+            {
+                printf("Error Action Http\n");
+            }
 
         }
  
@@ -407,12 +424,13 @@ void RespuestaHTTP()
         }
     }
     else{
-        printf("Rechazada\n");
+        printf("Rechazada Status Code %d \n",okStatusUsr);
         Master.write("Rechazada",sizeof("Rechazada"));
         commandByteUsr[0]='R';
         Master.write(&commandByteUsr[0],1);
     }
-
+    okStatusUsr = 1;
+    postReSent = 0;
     FinalizarComunicacion();
     // ApagarSIM900();
 
@@ -1024,7 +1042,7 @@ int main()
                 case COMMAND_POST:
                     Led = 1;
                     printf("-> -> Post HTTP\n");
-                    PostEncryptHTTP();
+                    PostEncryptHTTP(0);
                     break;
 
                 case COMMAND_ANSWER:
