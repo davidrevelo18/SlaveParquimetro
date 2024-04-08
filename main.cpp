@@ -315,7 +315,7 @@ void PostEncryptHTTP(bool resend)
 
     }
     if(okStatusUsr!=0 && postReSent==0){
-        postReSent = 1;
+        postReSent = 0;
         PostEncryptHTTP(1); 
     }
 
