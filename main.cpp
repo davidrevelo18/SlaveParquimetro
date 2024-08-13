@@ -33,6 +33,8 @@ using namespace std;
 #define     NO_DATA             0x87
 #define     COMMAND_END         0X88
 
+bool prod=0;
+
 /* COMUNICACION SERIAL*/
 BufferedSerial serial(PA_0,PA_1, 19200); // UART TX, RX Comunicacion con modem SIM900
 static UnbufferedSerial Master(PC_1, PC_0,9600); //transmision de master a slave
@@ -225,14 +227,26 @@ void ConexionGPRS()
     Gsm.send("AT+HTTPINIT\r\n"); 
     printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
+    if(prod==0){
+        printf("Debug mode");
+        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\"");
+        Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.epark.cr/AIGRest/AIGService/parkPQ\"\r\n"); 
+    }
+    else{
+        printf("Prod mode");
+        Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.e-park.cr/AIGRest/AIGService/parkPQ\"\r\n"); 
+    }
 
-    Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/parkPQ\"\r\n"); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(200));
    
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    ThisThread::sleep_for(chrono::milliseconds(400));
+    ThisThread::sleep_for(chrono::milliseconds(200));
+    
+    Gsm.send("AT+HTTPPARA=\"UA\",\"user-parquimetro\"\r\n");
+    printf("AT+HTTPPARA %i\r\n", Gsm.recv("OK"));
+    ThisThread::sleep_for(chrono::milliseconds(200));
     printf("Next Step\n");
     
     commandByte[0]=NEXT_STEP;
@@ -719,7 +733,17 @@ void Step7()
     printf("AT+HTTPINIT %i\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1/AIGRest/AIGService/alertPQ\""); 
+    if(prod==0){
+        printf("Debug mode");
+        Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.epark.cr/AIGRest/AIGService/alertPQ\""); 
+       //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\"");
+    }
+    else{
+        printf("Prod mode");
+        Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.e-park.cr/AIGRest/AIGService/alertPQ\""); 
+    }
+
+   // Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
 
     ThisThread::sleep_for(chrono::milliseconds(500));
@@ -774,7 +798,12 @@ void Step8()
 
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
-    ThisThread::sleep_for(chrono::milliseconds(500));
+    ThisThread::sleep_for(chrono::milliseconds(200));
+
+    Gsm.send("AT+HTTPPARA=\"UA\",\"user-parquimetro\"\r\n");
+    printf("AT+HTTPPARA %i\r\n", Gsm.recv("OK"));
+
+    ThisThread::sleep_for(chrono::milliseconds(300));
     // PrintSerialRepeat("AT+HTTPPARA=\"CONTENT\",\"application/json\"\r\n","OK",500,75);    // AT+HTTPPARA="CONTENT","application/json"
     commandByte[0]=NEXT_STEP;
     Master.write(&commandByte[0],1);
