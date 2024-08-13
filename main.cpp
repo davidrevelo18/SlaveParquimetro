@@ -215,14 +215,20 @@ void ConexionGPRS()
     printf("AT %i\r\n",Gsm.recv("OK")); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
-    printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
-    ThisThread::sleep_for(chrono::milliseconds(1600));
-
-    Gsm.send("AT+CGPADDR"); 
+    //Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"kolbi4g\"");
+    
+    Gsm.send("AT+CGDCONT=1,\"IP\",\"kolbi4g\"");
+    printf("AT+CGDCONT %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(500));
+   
+    Gsm.send("AT+CGACT=1,1");
+    printf("AT+CGACT %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(500));
+   
+    Gsm.send("AT+CGPADDR=1"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
     printf("response AT+CGPADDR %s\n",valueRecv); 
-    ThisThread::sleep_for(chrono::milliseconds(200));
+    ThisThread::sleep_for(chrono::milliseconds(1500));
 
     Gsm.send("AT+HTTPINIT\r\n"); 
     printf("AT+HTTPINIT %i\r\n",Gsm.recv("OK")); 
@@ -236,14 +242,13 @@ void ConexionGPRS()
         printf("Prod mode");
         Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.e-park.cr/AIGRest/AIGService/parkPQ\"\r\n"); 
     }
-
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(200));
    
     Gsm.send("AT+HTTPPARA=\"CONTENT\",\"application/json\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK"));
     ThisThread::sleep_for(chrono::milliseconds(200));
-    
+
     Gsm.send("AT+HTTPPARA=\"UA\",\"user-parquimetro\"\r\n");
     printf("AT+HTTPPARA %i\r\n", Gsm.recv("OK"));
     ThisThread::sleep_for(chrono::milliseconds(200));
@@ -701,8 +706,9 @@ void Step5()
     printf("AT %i\r\n",Gsm.recv("OK")); 
     // ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+CGSOCKCONT=1,\"IP\",\"internet.comcel.com.co\"");
-    printf("AT+CGSOCKCONT %i\r\n",Gsm.recv("OK")); 
+   Gsm.send("AT+CGDCONT=1,\"IP\",\"kolbi4g\"");
+
+    printf("AT+CGDCONT %i\r\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(1500));
 
     commandByte[0]=NEXT_STEP;
@@ -714,8 +720,11 @@ void Step5()
 void Step6()
 {
     char valueRecv[100];
+    Gsm.send("AT+CGACT=1,1");
+    printf("AT+CGACT %i\r\n",Gsm.recv("OK")); 
+    ThisThread::sleep_for(chrono::milliseconds(500));
 
-    Gsm.send("AT+CGPADDR"); 
+    Gsm.send("AT+CGPADDR=1"); 
     Gsm.recv("+CGPADDR:%s\r\nOK", valueRecv);
     printf("response AT+CGPADDR %s\n",valueRecv); 
     ThisThread::sleep_for(chrono::milliseconds(1500));
@@ -733,7 +742,7 @@ void Step7()
     printf("AT+HTTPINIT %i\n",Gsm.recv("OK")); 
     ThisThread::sleep_for(chrono::milliseconds(500));
 
-    if(prod==0){
+   if(prod==0){
         printf("Debug mode");
         Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.epark.cr/AIGRest/AIGService/alertPQ\""); 
        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\"");
@@ -743,7 +752,6 @@ void Step7()
         Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.e-park.cr/AIGRest/AIGService/alertPQ\""); 
     }
 
-   // Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\""); 
     printf("AT+HTTPPARA %i\r\n",Gsm.recv("OK")); 
 
     ThisThread::sleep_for(chrono::milliseconds(500));
