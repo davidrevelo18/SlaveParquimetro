@@ -33,7 +33,7 @@ using namespace std;
 #define     NO_DATA             0x87
 #define     COMMAND_END         0X88
 
-bool prod=0;
+bool prod=1;
 
 /* COMUNICACION SERIAL*/
 BufferedSerial serial(PA_0,PA_1, 19200); // UART TX, RX Comunicacion con modem SIM900
