@@ -57,7 +57,7 @@ char Encrypt[174];
 // char HostingData[]="{\"municipio\":\"San Jose\",\"id\":\"1068\",\"alerts\":\"AAAAAA\"}\r\n";
 char HostingData[]="{\"municipio\":\"xxxxxxxx\",\"id\":\"xxxx\",\"alerts\":\"xxxxxx\"}\r\n";
 char HostingAnswer[]="OK+000+00:00+00+           ";
-char userAnswer[]="0000000+00:00+0000-00-00";
+char userAnswer[]="0000000000+00:00+0000-00-00";
 
 /* VARIABLES PARA INTERRUPCION SERIAL MAESTRO/ESCLAVO */
 char c;
@@ -390,20 +390,20 @@ void RespuestaHTTP()
                 userAnswer[4]=value2[36];
                 userAnswer[5]=value2[37];
                 userAnswer[6]=value2[38];
-
                 userAnswer[7]=value2[39];
-
                 userAnswer[8]=value2[40];
                 userAnswer[9]=value2[41];
+
                 userAnswer[10]=value2[42];
+                
                 userAnswer[11]=value2[43];
                 userAnswer[12]=value2[44];
-
                 userAnswer[13]=value2[45];
-
                 userAnswer[14]=value2[46];
                 userAnswer[15]=value2[47];
+
                 userAnswer[16]=value2[48];
+
                 userAnswer[17]=value2[49];
                 userAnswer[18]=value2[50];
                 userAnswer[19]=value2[51];
@@ -411,6 +411,9 @@ void RespuestaHTTP()
                 userAnswer[21]=value2[53];
                 userAnswer[22]=value2[54];
                 userAnswer[23]=value2[55];
+                userAnswer[24]=value2[56];
+                userAnswer[25]=value2[57];
+                userAnswer[26]=value2[58];
 
                 Master.write(userAnswer,sizeof(userAnswer));
                 commandByteUsr[0]='A';
