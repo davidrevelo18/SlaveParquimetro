@@ -229,7 +229,7 @@ void ConexionGPRS()
     // ThisThread::sleep_for(chrono::milliseconds(500));
     if(prod==0){
         printf("Debug mode");
-        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\"");
+        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/parkPQ\"");
         Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.epark.cr/AIGRest/AIGService/parkPQ\"\r\n"); 
     }
     else{
