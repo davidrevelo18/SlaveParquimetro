@@ -33,7 +33,7 @@ using namespace std;
 #define     NO_DATA             0x87
 #define     COMMAND_END         0X88
 
-bool prod=1;
+bool prod=0;
 
 /* COMUNICACION SERIAL*/
 BufferedSerial serial(PA_0,PA_1, 19200); // UART TX, RX Comunicacion con modem SIM900
@@ -235,7 +235,7 @@ void ConexionGPRS()
     // ThisThread::sleep_for(chrono::milliseconds(500));
     if(prod==0){
         printf("Debug mode");
-        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/alertPQ\"");
+        //Gsm.send("AT+HTTPPARA=\"URL\",\"http://34.211.174.1:8181/AIGRest/AIGService/parkPQ\"");
         Gsm.send("AT+HTTPPARA=\"URL\",\"https://www.epark.cr/AIGRest/AIGService/parkPQ\"\r\n"); 
     }
     else{
